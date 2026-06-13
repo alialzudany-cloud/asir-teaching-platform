@@ -141,7 +141,6 @@ async function renderPublicSubmit() {
           <div class="form-grid">
             <label>المدرسة<select name="school_id" required>${state.publicData.schools.map((s) => `<option value="${s.id}">${s.name}</option>`).join("")}</select></label>
             <label>المرحلة الدراسية<select name="stage" required>${state.publicData.stages.map((stage) => `<option>${stage}</option>`).join("")}</select></label>
-            <label>مكتب التعليم<input name="education_office" placeholder="مثال: مكتب تعليم أبها"></label>
             <label>اسم مدير/ة المدرسة<select name="principal_name" required>${state.publicData.principal_names.map((name) => `<option>${name}</option>`).join("")}</select></label>
             <label>اسم المعلم/المعلمة<input name="teacher_name" placeholder="اسم المنفذ أو الفريق"></label>
             <label>رقم الجوال<input name="contact" type="tel" inputmode="tel" placeholder="مثال: 05XXXXXXXX"></label>
@@ -155,7 +154,6 @@ async function renderPublicSubmit() {
             <label class="wide">خطوات التنفيذ<textarea name="implementation_steps" placeholder="اكتب خطوات التنفيذ باختصار"></textarea></label>
             <label class="wide">الشواهد والنتائج<textarea name="evidence_results" placeholder="اكتب أبرز الشواهد والمؤشرات"></textarea></label>
             <label class="wide">رابط فيديو اختياري<textarea name="video_link" placeholder="رابط YouTube أو Drive إن وجد"></textarea></label>
-            <label class="wide">روابط خارجية إن وجدت<textarea name="external_links" placeholder="روابط Google Drive أو YouTube أو OneDrive"></textarea></label>
             <label class="wide">ملاحظات إضافية<textarea name="additional_notes" placeholder="أي معلومات إضافية ترغب المدرسة في توضيحها"></textarea></label>
           </div>
           <div class="actions" style="margin-top:14px">
