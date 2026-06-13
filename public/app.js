@@ -139,13 +139,12 @@ async function renderPublicSubmit() {
           <h2>تسجيل تجربة مدرسية</h2>
           <p>الحقول الأساسية مطلوبة حتى تصل التجربة بشكل واضح للمراجعة.</p>
           <div class="form-grid">
-            <label>المدرسة<select name="school_id" required>${state.publicData.schools.map((s) => `<option value="${s.id}">${s.name} - ${s.stage}</option>`).join("")}</select></label>
-            <label>اسم المدرسة<input name="school_name" placeholder="اكتب اسم المدرسة كما ترغب في ظهوره"></label>
-            <label>المرحلة الدراسية<input name="stage" placeholder="ابتدائي / متوسط / ثانوي / مسارات"></label>
+            <label>المدرسة<select name="school_id" required>${state.publicData.schools.map((s) => `<option value="${s.id}">${s.name}</option>`).join("")}</select></label>
+            <label>المرحلة الدراسية<select name="stage" required>${state.publicData.stages.map((stage) => `<option>${stage}</option>`).join("")}</select></label>
             <label>مكتب التعليم<input name="education_office" placeholder="مثال: مكتب تعليم أبها"></label>
-            <label>اسم قائد/قائدة المدرسة<input name="principal_name" placeholder="اسم قائد أو قائدة المدرسة"></label>
+            <label>اسم مدير/ة المدرسة<select name="principal_name" required>${state.publicData.principal_names.map((name) => `<option>${name}</option>`).join("")}</select></label>
             <label>اسم المعلم/المعلمة<input name="teacher_name" placeholder="اسم المنفذ أو الفريق"></label>
-            <label>رقم الجوال أو البريد الإلكتروني<input name="contact" placeholder="للتواصل عند الحاجة"></label>
+            <label>رقم الجوال<input name="contact" type="tel" inputmode="tel" placeholder="مثال: 05XXXXXXXX"></label>
             <label>مجال التجربة<select name="field" required>${state.publicData.fields.map((f) => `<option>${f}</option>`).join("")}</select></label>
             <label class="wide">عنوان التجربة<input name="title" required placeholder="مثال: بطاقات التقويم البنائي لتحسين المشاركة الصفية"></label>
             <label class="wide">وصف مختصر للتجربة<textarea name="description" required placeholder="اكتب فكرة التجربة باختصار"></textarea></label>

@@ -23,6 +23,41 @@ const statuses = ["مسودة", "قيد المراجعة", "بحاجة إلى ت
 const allowedExt = new Set([".pdf", ".jpg", ".jpeg", ".png", ".webp", ".mp4", ".mov", ".xlsx", ".csv", ".docx", ".pptx", ".zip"]);
 const sessions = new Map();
 
+const publicStageOptions = ["المرحلة الابتدائية", "المرحلة المتوسطة", "المرحلة الثانوية"];
+const publicPrincipalOptions = [
+  "محمد عبدالله قمشع",
+  "فائع أحمد الالمعي",
+  "عزيزة معيض القحطاني",
+  "نورة مرعي القحطاني",
+  "جميلة مغرم عسيري",
+  "عبدالله محمد الأحمري",
+  "ماجد محمد الشهراني",
+  "ناصر عوض القحطاني",
+  "سعيد محمد القحطاني",
+  "فاطمة فائع الحياني"
+];
+const publicSchoolCatalog = [
+  ["school_1", "ثانوية الأبناء الثالثة بخميس مشيط", "المرحلة الثانوية", "مكتب تعليم خميس مشيط", "محمد عبدالله قمشع"],
+  ["school_2", "ثانوية الصديق بخميس مشيط", "المرحلة الثانوية", "مكتب تعليم خميس مشيط", "فائع أحمد الالمعي"],
+  ["school_3", "الثانوية الأولى بخميس مشيط", "المرحلة الثانوية", "مكتب تعليم خميس مشيط", "عزيزة معيض القحطاني"],
+  ["school_4", "المتوسطة السادسة بخميس مشيط", "المرحلة المتوسطة", "مكتب تعليم خميس مشيط", "نورة مرعي القحطاني"],
+  ["school_5", "المتوسطة الرابعة عشرة بأبها", "المرحلة المتوسطة", "مكتب تعليم أبها", "جميلة مغرم عسيري"],
+  ["school_6", "متوسطة اليقين بأبها", "المرحلة المتوسطة", "مكتب تعليم أبها", "عبدالله محمد الأحمري"],
+  ["school_7", "متوسطة عبدالرحمن الغافقي بخميس مشيط", "المرحلة المتوسطة", "مكتب تعليم خميس مشيط", "ماجد محمد الشهراني"],
+  ["school_8", "ابتدائية سعيد بن زيد بخميس مشيط", "المرحلة الابتدائية", "مكتب تعليم خميس مشيط", "ناصر عوض القحطاني"],
+  ["school_9", "ابتدائية الإمام النووي بخميس مشيط", "المرحلة الابتدائية", "مكتب تعليم خميس مشيط", "سعيد محمد القحطاني"],
+  ["school_10", "الوادي الطالع للطفولة المبكرة بأبها", "المرحلة الابتدائية", "مكتب تعليم أبها", "فاطمة فائع الحياني"]
+].map(([id, name, stage, education_office, principal_name]) => ({
+  id,
+  name,
+  stage,
+  education_office,
+  principal_name,
+  coordinator_name: "",
+  phone: "",
+  email: ""
+}));
+
 const types = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -89,38 +124,7 @@ function seedDb() {
   ensureDirs();
   if (fs.existsSync(DB_FILE)) return;
 
-  const schools = [
-    {
-      id: "school_1",
-      name: "ثانوية أبها النموذجية",
-      stage: "ثانوي",
-      education_office: "مكتب تعليم أبها",
-      principal_name: "أحمد عسيري",
-      coordinator_name: "نورة القحطاني",
-      phone: "0550001111",
-      email: "abha-school@example.com"
-    },
-    {
-      id: "school_2",
-      name: "متوسطة السودة",
-      stage: "متوسط",
-      education_office: "مكتب تعليم أبها",
-      principal_name: "سالم الشهراني",
-      coordinator_name: "ريم الأحمري",
-      phone: "0550002222",
-      email: "alsoudah@example.com"
-    },
-    {
-      id: "school_3",
-      name: "ابتدائية رجال ألمع",
-      stage: "ابتدائي",
-      education_office: "مكتب تعليم رجال ألمع",
-      principal_name: "محمد الألمعي",
-      coordinator_name: "هند العسيري",
-      phone: "0550003333",
-      email: "alma@example.com"
-    }
-  ];
+  const schools = publicSchoolCatalog.map((school) => ({ ...school }));
 
   const users = [
     { id: "user_admin", name: "مدير النظام", email: "admin@asir.local", password_hash: hashPassword("Admin12345"), role: "admin", school_id: null, created_at: now() },
@@ -201,6 +205,20 @@ function readDb() {
   seedDb();
   const db = JSON.parse(fs.readFileSync(DB_FILE, "utf8"));
   let changed = false;
+  for (const school of publicSchoolCatalog) {
+    const existing = db.schools.find((item) => item.id === school.id);
+    if (existing) {
+      for (const [key, value] of Object.entries(school)) {
+        if (existing[key] !== value) {
+          existing[key] = value;
+          changed = true;
+        }
+      }
+    } else {
+      db.schools.push({ ...school });
+      changed = true;
+    }
+  }
   if (db.magazine?.[0]?.title?.includes(`المجلة ${"الإلكترونية"}`)) {
     db.magazine[0].title = "إصدارات تجارب تحسين التدريس";
     db.magazine[0].introduction = "يوثق هذا الإصدار نماذج مدرسية ملهمة في تحسين التدريس، ويعرض أثرها وشواهدها بلغة مهنية موجزة.";
@@ -274,7 +292,9 @@ function filterDbForUser(db, user) {
 
 function publicBootstrap(db) {
   return {
-    schools: db.schools,
+    schools: publicSchoolCatalog,
+    stages: publicStageOptions,
+    principal_names: publicPrincipalOptions,
     fields: ["البيئة الصفية", "التخطيط للتدريس", "تنفيذ الدروس", "التقويم", "تأمل المعلمين", "تحسين نواتج التعلم", "ممارسات التعلم العميق", "أخرى"],
     share_url: shareUrl()
   };
