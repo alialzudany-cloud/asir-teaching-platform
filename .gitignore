@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+!.env.example
+logs/
+backups/
+uploads/
+data/db.json
+data/public-url.txt
+*.log
+cloudflared*.log

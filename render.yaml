@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: asir-teaching-platform
+    env: node
+    plan: starter
+    buildCommand: ""
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: PUBLIC_APP_URL
+        sync: false
+      - key: DATA_DIR
+        value: /var/data
+      - key: UPLOADS_DIR
+        value: /var/data/uploads
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: MAX_IMAGE_MB
+        value: 20
+      - key: MAX_DOCUMENT_MB
+        value: 50
+      - key: MAX_VIDEO_MB
+        value: 500
+      - key: MAX_ARCHIVE_MB
+        value: 100
+      - key: MAX_REQUEST_MB
+        value: 650
+    disk:
+      name: asir-platform-data
+      mountPath: /var/data
+      sizeGB: 10

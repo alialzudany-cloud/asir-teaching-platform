@@ -1,0 +1,12 @@
+{
+  "name": "asir-teaching-platform",
+  "version": "1.0.0",
+  "description": "منصة تجارب تحسين التدريس - تعليم عسير",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "start:prod": "node server.js",
+    "health": "node scripts/check-health.js"
+  },
+  "private": true
+}

@@ -1,0 +1,9 @@
+node_modules
+logs
+backups
+.env
+.env.*
+uploads
+data/db.json
+cloudflared*.log
+npm-debug.log
