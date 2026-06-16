@@ -546,8 +546,8 @@ async function handleApi(req, res, pathname, db) {
       external_links: body.external_links || "",
       video_link: body.video_link || "",
       additional_notes: body.additional_notes || "",
-      status: "قيد المراجعة",
-      admin_notes: "",
+      status: "مسودة",
+      admin_notes: "بانتظار رفع الصور أو الشواهد لإكمال الإرسال.",
       generated_summary: "",
       generated_card: "",
       included_in_magazine: false,
@@ -557,7 +557,7 @@ async function handleApi(req, res, pathname, db) {
     };
     db.experiences.push(experience);
     writeDb(db);
-    return send(res, 200, { message: "تم إرسال التجربة للمراجعة بنجاح.", experience_id: experience.id, upload_token: uploadToken, reference_number: experience.reference_number });
+    return send(res, 200, { message: "تم حفظ بيانات التجربة، ويكتمل الإرسال بعد رفع الشواهد.", experience_id: experience.id, upload_token: uploadToken, reference_number: experience.reference_number });
   }
 
   const publicUploadMatch = pathname.match(/^\/api\/public\/experiences\/([^/]+)\/files$/);
@@ -571,11 +571,13 @@ async function handleApi(req, res, pathname, db) {
     const buffer = await readBody(req);
     const parts = parseMultipart(buffer, boundary);
     const category = parts.find((p) => p.name === "category")?.content.toString("utf8") || "شواهد طلابية";
+    const fileParts = parts.filter((p) => p.filename);
+    if (!fileParts.length) return send(res, 400, { error: "إرفاق الصور أو الشواهد إلزامي لإرسال التجربة." });
     const school = db.schools.find((s) => s.id === exp.school_id);
     const dir = path.join(UPLOADS, safeName(school?.name || "school").replace(path.extname(school?.name || ""), ""), safeName(exp.title).replace(path.extname(exp.title), ""));
     fs.mkdirSync(dir, { recursive: true });
     const saved = [];
-    for (const part of parts.filter((p) => p.filename)) {
+    for (const part of fileParts) {
       let ext;
       try {
         ext = validateUploadPart(part);
@@ -590,8 +592,11 @@ async function handleApi(req, res, pathname, db) {
       db.files.push(file);
       saved.push(file);
     }
+    exp.status = "قيد المراجعة";
+    exp.admin_notes = "";
+    exp.updated_at = now();
     writeDb(db);
-    return send(res, 200, { message: "تم رفع الملف بنجاح.", files: saved });
+    return send(res, 200, { message: "تم رفع الشواهد وإرسال التجربة للمراجعة بنجاح.", files: saved });
   }
 
   if (req.method === "POST" && pathname === "/api/login") {

@@ -78,7 +78,7 @@ function shareMessage(link) {
 نأمل منكم تسجيل تجربة تحسين التدريس عبر الرابط التالي:
 ${link}
 
-يرجى فتح الرابط، ثم تعبئة نموذج تسجيل تجربة مدرسية، وإرسال التجربة ورفع المرفقات إن وجدت.`;
+يرجى فتح الرابط، ثم تعبئة نموذج تسجيل تجربة مدرسية، وإرفاق الصور أو الشواهد المطلوبة، ثم إرسال التجربة.`;
 }
 
 async function api(path, options = {}) {
@@ -131,7 +131,7 @@ async function renderPublicSubmit() {
         <h1>رابط تسجيل تجارب تحسين التدريس للمدارس</h1>
         <p>هذا الرابط مخصص للمدارس ومنسقي التجارب لإرسال التجارب مباشرة إلى الإدارة للمراجعة والاعتماد.</p>
         <div class="demo-users">
-          <span>بعد حفظ التجربة يمكنك رفع ملفات PDF والصور والفيديو وExcel وWord.</span>
+          <span>إرفاق الصور أو الشواهد إلزامي لإكمال إرسال التجربة. يرجى عدم إغلاق الصفحة أثناء رفع الملفات الكبيرة.</span>
         </div>
       </section>
       <section class="login-panel">
@@ -156,6 +156,7 @@ async function renderPublicSubmit() {
             <label class="wide">رابط فيديو اختياري<textarea name="video_link" placeholder="رابط YouTube أو Drive إن وجد"></textarea></label>
             <label class="wide">ملاحظات إضافية<textarea name="additional_notes" placeholder="أي معلومات إضافية ترغب المدرسة في توضيحها"></textarea></label>
           </div>
+          ${publicUploadHtml({ required: true, showButton: false })}
           <div class="actions" style="margin-top:14px">
             <button class="btn primary" type="submit">إرسال التجربة للمراجعة</button>
             <a class="btn" href="/">دخول لوحة المنصة</a>
@@ -165,36 +166,46 @@ async function renderPublicSubmit() {
       </section>
     </main>`;
 
+  document.querySelector('input[name="public_files"]').addEventListener("change", renderSelectedPublicFiles);
   document.querySelector("#publicSubmitForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
-    const body = Object.fromEntries(new FormData(form));
+    const submitButton = form.querySelector('button[type="submit"]');
+    const fileInput = form.querySelector('input[name="public_files"]');
+    if (!fileInput.files.length) return showToast("إرفاق الصور أو الشواهد إلزامي قبل إرسال التجربة.", true);
+    const formData = new FormData(form);
+    formData.delete("public_files");
+    formData.delete("public_category");
+    const body = Object.fromEntries(formData);
     try {
+      submitButton.disabled = true;
+      submitButton.textContent = "جار إرسال التجربة ورفع الشواهد...";
       const result = await api("/api/public/experiences", { method: "POST", body });
       state.publicSubmission = result;
-      showToast(result.message);
-      form.querySelector('button[type="submit"]').disabled = true;
-      document.querySelector("#publicUploadArea").innerHTML = `<div class="empty" style="margin-top:14px"><b>تم استلام التجربة.</b><br>الرقم المرجعي: <strong>${result.reference_number}</strong><br>يمكن تصوير هذه الرسالة أو طباعتها.</div>` + publicUploadHtml();
-      document.querySelector("#publicUploadBtn").addEventListener("click", publicUploadFiles);
-      document.querySelector('input[name="public_files"]').addEventListener("change", renderSelectedPublicFiles);
+      await publicUploadFiles({ silent: true });
+      document.querySelector("#publicUploadArea").innerHTML = `<div class="empty" style="margin-top:14px"><b>تم استلام التجربة ورفع الشواهد بنجاح.</b><br>الرقم المرجعي: <strong>${result.reference_number}</strong><br>يمكن تصوير هذه الرسالة أو طباعتها.</div>`;
+      submitButton.textContent = "تم إرسال التجربة";
+      showToast("تم إرسال التجربة ورفع الشواهد بنجاح.");
     } catch (error) {
+      submitButton.disabled = false;
+      submitButton.textContent = "إرسال التجربة للمراجعة";
       showToast(error.message, true);
     }
   });
 }
 
-function publicUploadHtml() {
+function publicUploadHtml({ required = false, showButton = true } = {}) {
   return `
     <div class="card" style="margin-top:16px;box-shadow:none">
-      <h3>رفع مرفقات التجربة</h3>
-      <p style="color:var(--muted);line-height:1.8">يمكنك الآن رفع تقرير التجربة أو الصور أو الفيديو أو ملفات النتائج.</p>
+      <h3>الصور والشواهد</h3>
+      <p style="color:var(--muted);line-height:1.8">${required ? "إرفاق ملف واحد على الأقل إلزامي لإرسال التجربة. يمكن رفع الصور أو ملف PDF أو ملف فيديو أو ملف نتائج." : "يمكنك الآن رفع تقرير التجربة أو الصور أو الفيديو أو ملفات النتائج."}</p>
       <div class="form-grid">
         <label>تصنيف الملف<select name="public_category"><option>تقرير التجربة</option><option>صور التنفيذ</option><option>فيديو توثيقي</option><option>إحصاءات ونتائج</option><option>شواهد طلابية</option><option>عروض تقديمية</option></select></label>
-        <label>الملفات<input name="public_files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.mp4,.mov,.xlsx,.csv,.docx,.pptx,.zip"></label>
+        <label>الملفات<input name="public_files" type="file" multiple ${required ? "required" : ""} accept=".pdf,.jpg,.jpeg,.png,.webp,.mp4,.mov,.xlsx,.csv,.docx,.pptx,.zip"></label>
       </div>
       <div id="publicSelectedFiles" class="file-list" style="margin-top:10px"></div>
       <div class="bar-track" style="margin-top:10px"><div id="publicUploadProgress" class="bar-fill" style="width:0%"></div></div>
-      <button class="btn gold" type="button" id="publicUploadBtn" style="margin-top:10px">رفع المرفقات</button>
+      ${showButton ? `<button class="btn gold" type="button" id="publicUploadBtn" style="margin-top:10px">رفع المرفقات</button>` : ""}
       <div id="publicUploadResult" class="file-list" style="margin-top:10px"></div>
     </div>`;
 }
@@ -205,39 +216,45 @@ function renderSelectedPublicFiles() {
   box.innerHTML = Array.from(fileInput.files).map((file) => `<div class="file-item"><b>${file.name}</b><span>${Math.round(file.size / 1024)} ك.ب</span></div>`).join("");
 }
 
-async function publicUploadFiles() {
+async function publicUploadFiles(options = {}) {
   const fileInput = document.querySelector('input[name="public_files"]');
   if (!fileInput.files.length) return showToast("يرجى اختيار ملف واحد على الأقل.", true);
   const button = document.querySelector("#publicUploadBtn");
   const progress = document.querySelector("#publicUploadProgress");
-  button.disabled = true;
+  if (button) button.disabled = true;
   progress.style.width = "0%";
   const data = new FormData();
   data.append("category", document.querySelector('select[name="public_category"]').value);
   Array.from(fileInput.files).forEach((file) => data.append("files", file, file.name));
   const url = `/api/public/experiences/${state.publicSubmission.experience_id}/files?token=${state.publicSubmission.upload_token}`;
-  const xhr = new XMLHttpRequest();
-  xhr.open("POST", url);
-  xhr.upload.onprogress = (event) => {
-    if (event.lengthComputable) progress.style.width = `${Math.round((event.loaded / event.total) * 100)}%`;
-  };
-  xhr.onload = () => {
-    button.disabled = false;
-    try {
-      const result = JSON.parse(xhr.responseText || "{}");
-      if (xhr.status < 200 || xhr.status >= 300) throw new Error(result.error || "فشل رفع الملفات.");
-      progress.style.width = "100%";
-      showToast(result.message);
-      document.querySelector("#publicUploadResult").innerHTML = result.files.map((file) => `<div class="file-item"><b>${file.file_name}</b><span>${file.file_category} | ${Math.round(file.file_size / 1024)} ك.ب</span></div>`).join("");
-    } catch (error) {
-      showToast(error.message, true);
-    }
-  };
-  xhr.onerror = () => {
-    button.disabled = false;
-    showToast("تعذر رفع الملفات. تحقق من الاتصال ثم حاول مرة أخرى.", true);
-  };
-  xhr.send(data);
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) progress.style.width = `${Math.round((event.loaded / event.total) * 100)}%`;
+    };
+    xhr.onload = () => {
+      if (button) button.disabled = false;
+      try {
+        const result = JSON.parse(xhr.responseText || "{}");
+        if (xhr.status < 200 || xhr.status >= 300) throw new Error(result.error || "فشل رفع الملفات.");
+        progress.style.width = "100%";
+        if (!options.silent) showToast(result.message);
+        document.querySelector("#publicUploadResult").innerHTML = result.files.map((file) => `<div class="file-item"><b>${file.file_name}</b><span>${file.file_category} | ${Math.round(file.file_size / 1024)} ك.ب</span></div>`).join("");
+        resolve(result);
+      } catch (error) {
+        if (!options.silent) showToast(error.message, true);
+        reject(error);
+      }
+    };
+    xhr.onerror = () => {
+      if (button) button.disabled = false;
+      const error = new Error("تعذر رفع الملفات. تحقق من الاتصال ثم حاول مرة أخرى.");
+      if (!options.silent) showToast(error.message, true);
+      reject(error);
+    };
+    xhr.send(data);
+  });
 }
 
 function renderLogin() {
