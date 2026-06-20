@@ -57,6 +57,14 @@ const publicSchoolCatalog = [
   phone: "",
   email: ""
 }));
+const demoExperienceTitles = new Set([
+  "مجتمعات تعلم مصغرة لتحسين التخطيط اليومي",
+  "بطاقات التأمل السريع بعد الحصة",
+  "تجربة اختبار القوائم",
+  "تجربة إلزام الشواهد",
+  "تجربة رفض رفع فارغ",
+  "تجربة رفع شاهد"
+]);
 
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -205,6 +213,14 @@ function readDb() {
   seedDb();
   const db = JSON.parse(fs.readFileSync(DB_FILE, "utf8"));
   let changed = false;
+  const demoExperienceIds = new Set((db.experiences || []).filter((exp) => demoExperienceTitles.has(exp.title)).map((exp) => exp.id));
+  if (demoExperienceIds.size) {
+    db.experiences = (db.experiences || []).filter((exp) => !demoExperienceIds.has(exp.id));
+    db.files = (db.files || []).filter((file) => !demoExperienceIds.has(file.experience_id));
+    db.magazineItems = (db.magazineItems || []).filter((item) => !demoExperienceIds.has(item.experience_id));
+    db.audit = (db.audit || []).filter((item) => !demoExperienceIds.has(item.experience_id));
+    changed = true;
+  }
   for (const school of publicSchoolCatalog) {
     const existing = db.schools.find((item) => item.id === school.id);
     if (existing) {
